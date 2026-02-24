@@ -9,8 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/wbrijesh/origin/internal/config"
 	"github.com/wbrijesh/origin/internal/db"
 	"github.com/wbrijesh/origin/internal/hooks"
@@ -74,32 +72,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Start servers concurrently
-	g, _ := errgroup.WithContext(ctx)
-
-	g.Go(func() error {
-		return sshServer.ListenAndServe()
-	})
-
-	// Create and start HTTP server
+	// Create HTTP server
 	httpServer := httpsrv.New(cfg, database)
-	g.Go(func() error {
-		return httpServer.ListenAndServe()
-	})
 
 	slog.Info(fmt.Sprintf("%s is ready", cfg.Name))
 
-	// Wait for shutdown signal
+	// Start servers concurrently.
+	// Each server runs independently — if one fails, the other keeps going.
 	go func() {
-		<-ctx.Done()
-		slog.Info("shutting down...")
-		sshServer.Close()
-		httpServer.Close()
+		if err := sshServer.ListenAndServe(); err != nil {
+			slog.Error("SSH server failed", "error", err)
+		}
 	}()
 
-	if err := g.Wait(); err != nil {
-		slog.Error("server error", "error", err)
-	}
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil && ctx.Err() == nil {
+			slog.Error("HTTP server failed", "error", err)
+		}
+	}()
+
+	// Wait for shutdown signal
+	<-ctx.Done()
+	slog.Info("shutting down...")
+	sshServer.Close()
+	httpServer.Close()
 }
 
 // runHook executes a git hook. Called by the hook scripts that

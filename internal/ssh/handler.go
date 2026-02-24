@@ -95,10 +95,11 @@ func (s *Server) handleSession(sess ssh.Session) {
 }
 
 // sanitizeRepoName cleans up a repository name from git commands.
-// Git clients send paths like '/my-repo.git' or 'my-repo.git'.
+// Git clients send paths like '/my-repo.git', 'my-repo.git', or '/my-repo'.
+// Quotes must be stripped first since git wraps the path in single quotes.
 func sanitizeRepoName(name string) string {
+	name = strings.Trim(name, "'\"")
 	name = strings.TrimPrefix(name, "/")
 	name = strings.TrimSuffix(name, ".git")
-	name = strings.Trim(name, "'\"")
 	return filepath.Clean(name)
 }
