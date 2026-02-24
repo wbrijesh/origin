@@ -92,7 +92,7 @@ func (s *Server) handleRepo(w http.ResponseWriter, r *http.Request) {
 	data["RepoName"] = repoName
 	data["Description"] = repo.Description
 	data["IsPrivate"] = repo.IsPrivate
-	data["CloneSSH"] = fmt.Sprintf("ssh://%s/%s", s.cfg.SSH.ListenAddr, repoName)
+	data["CloneSSH"] = fmt.Sprintf("%s/%s", s.cfg.SSHCloneBase(), repoName)
 	data["CloneHTTP"] = fmt.Sprintf("%s/%s", s.cfg.HTTP.PublicURL, repoName)
 
 	gitRepo, err := gitpkg.OpenRepo(s.cfg.ReposPath(), repoName)

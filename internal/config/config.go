@@ -176,3 +176,29 @@ func (c *Config) EnsureDirectories() error {
 func (c *Config) HasTLS() bool {
 	return c.HTTP.TLSCertPath != "" && c.HTTP.TLSKeyPath != ""
 }
+
+// SSHCloneBase returns the base SSH URL for clone commands, e.g. "ssh://git.example.com:22222".
+// It extracts the hostname from the HTTP public URL and combines it with the SSH listen port.
+func (c *Config) SSHCloneBase() string {
+	// Extract hostname from public URL (e.g. "https://git.example.com:3443" → "git.example.com")
+	host := c.HTTP.PublicURL
+	// Strip scheme
+	if idx := strings.Index(host, "://"); idx >= 0 {
+		host = host[idx+3:]
+	}
+	// Strip port and path
+	if idx := strings.IndexAny(host, ":/"); idx >= 0 {
+		host = host[:idx]
+	}
+
+	// Extract port from SSH listen addr
+	port := c.SSH.ListenAddr
+	if idx := strings.LastIndex(port, ":"); idx >= 0 {
+		port = port[idx+1:]
+	}
+
+	if port == "22" {
+		return "ssh://" + host
+	}
+	return "ssh://" + host + ":" + port
+}

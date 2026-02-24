@@ -470,12 +470,13 @@ func (s *Server) handleSettingsWithNewToken(w http.ResponseWriter, r *http.Reque
 	data["SSHKeys"] = keys
 
 	type tokenRow struct {
-		ID        int       `db:"id"`
-		Name      string    `db:"name"`
-		CreatedAt time.Time `db:"created_at"`
+		ID        int        `db:"id"`
+		Name      string     `db:"name"`
+		ExpiresAt *time.Time `db:"expires_at"`
+		CreatedAt time.Time  `db:"created_at"`
 	}
 	var tokens []tokenRow
-	s.db.Select(&tokens, "SELECT id, name, created_at FROM access_tokens ORDER BY created_at DESC") //nolint:errcheck
+	s.db.Select(&tokens, "SELECT id, name, expires_at, created_at FROM access_tokens ORDER BY created_at DESC") //nolint:errcheck
 	data["Tokens"] = tokens
 
 	if newToken != "" {
