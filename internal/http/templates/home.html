@@ -1,0 +1,40 @@
+{{define "content"}}
+<div>
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold">Repositories</h1>
+        {{if .LoggedIn}}
+        <a href="/-/repos/new" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">
+            New Repository
+        </a>
+        {{end}}
+    </div>
+
+    {{if .Repos}}
+    <div class="space-y-3">
+        {{range .Repos}}
+        <a href="/{{.Name}}/" class="block bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-lg font-semibold text-blue-600">{{.Name}}</span>
+                    {{if .IsPrivate}}
+                    <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">private</span>
+                    {{end}}
+                </div>
+                <span class="text-sm text-gray-500">{{.UpdatedAt | timeAgo}}</span>
+            </div>
+            {{if .Description}}
+            <p class="text-gray-600 text-sm mt-1">{{.Description}}</p>
+            {{end}}
+        </a>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="text-center py-16 text-gray-500">
+        <p class="text-lg">No repositories yet.</p>
+        {{if .LoggedIn}}
+        <p class="mt-2">Create your first repository to get started.</p>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+{{end}}

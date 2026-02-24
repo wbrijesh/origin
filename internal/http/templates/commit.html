@@ -1,0 +1,42 @@
+{{define "content"}}
+<div>
+    {{template "repo-header" .}}
+
+    <!-- Commit info -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-2">{{.Commit.Message | firstLine}}</h2>
+        {{if .FullMessage}}
+        <pre class="text-sm text-gray-600 whitespace-pre-wrap mt-2 mb-4">{{.FullMessage}}</pre>
+        {{end}}
+        <div class="flex items-center gap-4 text-sm text-gray-500">
+            <span>{{.Commit.Author}} &lt;{{.Commit.AuthorEmail}}&gt;</span>
+            <span>{{.Commit.Date | timeAgo}}</span>
+            <code class="bg-gray-100 px-2 py-0.5 rounded text-xs font-mono">{{.Commit.Hash}}</code>
+        </div>
+        {{if .Commit.Signature}}
+        <div class="mt-2">
+            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Signed</span>
+        </div>
+        {{end}}
+    </div>
+
+    <!-- Diff stats -->
+    <div class="bg-white border border-gray-200 rounded-lg mb-6 overflow-hidden">
+        <div class="px-4 py-2 bg-gray-50 border-b border-gray-200 text-sm text-gray-600">
+            {{len .Diff.Stats}} files changed
+        </div>
+        {{range .Diff.Stats}}
+        <div class="px-4 py-1.5 border-b border-gray-100 text-sm flex items-center gap-2">
+            <span class="font-mono text-blue-600">{{.Name}}</span>
+            {{if .Additions}}<span class="text-green-600">+{{.Additions}}</span>{{end}}
+            {{if .Deletions}}<span class="text-red-600">-{{.Deletions}}</span>{{end}}
+        </div>
+        {{end}}
+    </div>
+
+    <!-- Diff content -->
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <pre class="text-xs font-mono p-4 overflow-x-auto leading-5">{{range .DiffLines}}{{if .IsAdd}}<span class="diff-add block px-2">{{.Text}}</span>{{else if .IsDel}}<span class="diff-del block px-2">{{.Text}}</span>{{else if .IsHunk}}<span class="diff-hunk block px-2">{{.Text}}</span>{{else}}<span class="block px-2">{{.Text}}</span>{{end}}{{end}}</pre>
+    </div>
+</div>
+{{end}}

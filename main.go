@@ -118,8 +118,9 @@ func runHook(hookName string) {
 			os.Exit(1)
 		}
 	case "post-receive":
-		// TODO: Phase 8 — trigger webhooks
-		slog.Debug("post-receive hook (no-op)")
+		if err := hooks.RunPostReceive(os.Stdin); err != nil {
+			slog.Error("post-receive hook error", "error", err)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "origin: unknown hook: %s\n", hookName)
 		os.Exit(1)

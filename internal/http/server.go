@@ -16,13 +16,15 @@ type Server struct {
 	cfg    *config.Config
 	db     *sqlx.DB
 	server *http.Server
+	render *renderer
 }
 
 // New creates a new HTTP server with all routes registered.
 func New(cfg *config.Config, db *sqlx.DB) *Server {
 	s := &Server{
-		cfg: cfg,
-		db:  db,
+		cfg:    cfg,
+		db:     db,
+		render: newRenderer(),
 	}
 
 	mux := http.NewServeMux()

@@ -1,0 +1,49 @@
+{{define "content"}}
+<div>
+    {{template "repo-header" .}}
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex gap-6 -mb-px">
+            <a href="/{{.RepoName}}/" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Files</a>
+            <a href="/{{.RepoName}}/log/{{.Ref}}" class="border-b-2 border-blue-500 text-blue-600 pb-3 text-sm font-medium">Commits</a>
+            <a href="/{{.RepoName}}/refs" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Refs</a>
+        </nav>
+    </div>
+
+    <div class="text-sm text-gray-600 mb-4">
+        Branch: <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-xs">{{.Ref}}</span>
+    </div>
+
+    <div class="space-y-2">
+        {{range .Commits}}
+        <a href="/{{$.RepoName}}/commit/{{.Hash}}" class="block bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <p class="font-medium text-gray-900 truncate">{{.Message | firstLine}}</p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{.Author}} committed {{.Date | timeAgo}}
+                    </p>
+                </div>
+                <code class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-mono shrink-0">{{.ShortHash}}</code>
+            </div>
+        </a>
+        {{end}}
+    </div>
+
+    <!-- Pagination -->
+    {{if or .HasPrev .HasNext}}
+    <div class="flex justify-between items-center mt-6">
+        {{if .HasPrev}}
+        <a href="/{{.RepoName}}/log/{{.Ref}}?page={{sub .Page 1}}" class="text-sm text-blue-600 hover:underline">&larr; Newer</a>
+        {{else}}
+        <span></span>
+        {{end}}
+        <span class="text-sm text-gray-500">Page {{add .Page 1}}</span>
+        {{if .HasNext}}
+        <a href="/{{.RepoName}}/log/{{.Ref}}?page={{add .Page 1}}" class="text-sm text-blue-600 hover:underline">Older &rarr;</a>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+{{end}}

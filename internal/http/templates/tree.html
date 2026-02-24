@@ -1,0 +1,52 @@
+{{define "content"}}
+<div>
+    {{template "repo-header" .}}
+
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-600 mb-4">
+        <a href="/{{.RepoName}}/" class="text-blue-600 hover:underline">{{.RepoName}}</a>
+        <span class="mx-1">/</span>
+        <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-xs">{{.Ref}}</span>
+        {{range .Breadcrumbs}}
+        <span class="mx-1">/</span>
+        <a href="/{{$.RepoName}}/tree/{{$.Ref}}/{{.Path}}" class="text-blue-600 hover:underline">{{.Name}}</a>
+        {{end}}
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex gap-6 -mb-px">
+            <a href="/{{.RepoName}}/" class="border-b-2 border-blue-500 text-blue-600 pb-3 text-sm font-medium">Files</a>
+            <a href="/{{.RepoName}}/log/{{.Ref}}" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Commits</a>
+            <a href="/{{.RepoName}}/refs" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Refs</a>
+        </nav>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+            {{if .ParentPath}}
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="px-4 py-2">
+                    <a href="/{{$.RepoName}}/tree/{{$.Ref}}/{{.ParentPath}}" class="text-blue-600 hover:underline">..</a>
+                </td>
+            </tr>
+            {{end}}
+            {{range .Entries}}
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="px-4 py-2">
+                    {{if .IsDir}}
+                    <a href="/{{$.RepoName}}/tree/{{$.Ref}}/{{$.CurrentPath}}{{.Name}}" class="text-blue-600 hover:underline">
+                        <span class="text-gray-400 mr-1">&#128193;</span>{{.Name}}
+                    </a>
+                    {{else}}
+                    <a href="/{{$.RepoName}}/blob/{{$.Ref}}/{{$.CurrentPath}}{{.Name}}" class="text-blue-600 hover:underline">
+                        <span class="text-gray-400 mr-1">&#128196;</span>{{.Name}}
+                    </a>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+        </table>
+    </div>
+</div>
+{{end}}

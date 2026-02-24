@@ -1,0 +1,40 @@
+{{define "content"}}
+<div>
+    {{template "repo-header" .}}
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex gap-6 -mb-px">
+            <a href="/{{.RepoName}}/" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Files</a>
+            <a href="/{{.RepoName}}/log/{{.DefaultBranch}}" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Commits</a>
+            <a href="/{{.RepoName}}/refs" class="border-b-2 border-blue-500 text-blue-600 pb-3 text-sm font-medium">Refs</a>
+        </nav>
+    </div>
+
+    <!-- Branches -->
+    {{if .Branches}}
+    <h3 class="text-lg font-semibold mb-3">Branches</h3>
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-8">
+        {{range .Branches}}
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 last:border-0">
+            <a href="/{{$.RepoName}}/log/{{.Name}}" class="text-blue-600 hover:underline font-mono text-sm">{{.Name}}</a>
+            <code class="text-xs text-gray-500">{{.ShortHash}}</code>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+
+    <!-- Tags -->
+    {{if .Tags}}
+    <h3 class="text-lg font-semibold mb-3">Tags</h3>
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        {{range .Tags}}
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 last:border-0">
+            <a href="/{{$.RepoName}}/log/{{.Name}}" class="text-blue-600 hover:underline font-mono text-sm">{{.Name}}</a>
+            <code class="text-xs text-gray-500">{{.ShortHash}}</code>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+{{end}}

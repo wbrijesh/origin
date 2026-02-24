@@ -1,0 +1,15 @@
+{{define "repo-header"}}
+<div class="mb-6">
+    <div class="flex items-center gap-3 mb-1">
+        <h1 class="text-2xl font-bold">
+            <a href="/{{.RepoName}}/" class="text-blue-600 hover:underline">{{.RepoName}}</a>
+        </h1>
+        {{if .IsPrivate}}
+        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">private</span>
+        {{end}}
+    </div>
+    {{if .Description}}
+    <p class="text-gray-600">{{.Description}}</p>
+    {{end}}
+</div>
+{{end}}

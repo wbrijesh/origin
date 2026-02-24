@@ -1,0 +1,73 @@
+{{define "content"}}
+<div>
+    {{template "repo-header" .}}
+
+    <!-- Clone URLs -->
+    <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+        <div class="flex flex-wrap gap-4 text-sm">
+            <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-700">SSH:</span>
+                <code class="bg-gray-100 px-2 py-1 rounded text-xs select-all">{{.CloneSSH}}</code>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-700">HTTPS:</span>
+                <code class="bg-gray-100 px-2 py-1 rounded text-xs select-all">{{.CloneHTTP}}</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+        <nav class="flex gap-6 -mb-px">
+            <a href="/{{.RepoName}}/" class="border-b-2 border-blue-500 text-blue-600 pb-3 text-sm font-medium">Files</a>
+            <a href="/{{.RepoName}}/log/{{.DefaultBranch}}" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Commits</a>
+            <a href="/{{.RepoName}}/refs" class="text-gray-500 hover:text-gray-700 pb-3 text-sm font-medium">Refs</a>
+        </nav>
+    </div>
+
+    {{if .IsEmpty}}
+    <div class="bg-white border border-gray-200 rounded-lg p-8 text-center">
+        <h3 class="text-lg font-semibold mb-4">This repository is empty</h3>
+        <p class="text-gray-600 mb-4">Push your first commit to get started:</p>
+        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-sm text-left max-w-lg mx-auto overflow-x-auto">git init
+git add .
+git commit -S -m "initial commit"
+git remote add origin {{.CloneSSH}}
+git push -u origin main</pre>
+    </div>
+    {{else}}
+    <!-- File tree -->
+    {{if .Entries}}
+    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <table class="w-full text-sm">
+            {{range .Entries}}
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="px-4 py-2">
+                    {{if .IsDir}}
+                    <a href="/{{$.RepoName}}/tree/{{$.DefaultBranch}}/{{.Name}}" class="text-blue-600 hover:underline">
+                        <span class="text-gray-400 mr-1">&#128193;</span>{{.Name}}
+                    </a>
+                    {{else}}
+                    <a href="/{{$.RepoName}}/blob/{{$.DefaultBranch}}/{{.Name}}" class="text-blue-600 hover:underline">
+                        <span class="text-gray-400 mr-1">&#128196;</span>{{.Name}}
+                    </a>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+        </table>
+    </div>
+    {{end}}
+
+    <!-- README -->
+    {{if .Readme}}
+    <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-2 mb-4">{{.ReadmeFile}}</h3>
+        <div class="prose prose-sm max-w-none">
+            {{.Readme}}
+        </div>
+    </div>
+    {{end}}
+    {{end}}
+</div>
+{{end}}

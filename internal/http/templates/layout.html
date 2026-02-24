@@ -1,0 +1,57 @@
+{{define "layout"}}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{if .Title}}{{.Title}} — {{end}}{{.ServerName}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        {{template "chroma-css"}}
+    </style>
+    <style type="text/tailwindcss">
+        .prose { max-width: none; }
+        .prose pre { overflow-x: auto; }
+        .prose code { font-size: 0.875rem; }
+        .diff-add { background-color: #e6ffec; }
+        .diff-del { background-color: #ffebe9; }
+        .diff-hunk { background-color: #f0f4ff; color: #57606a; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+    <nav class="bg-white border-b border-gray-200 px-6 py-3">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600">{{.ServerName}}</a>
+            <div class="flex items-center gap-4">
+                {{if .LoggedIn}}
+                    <a href="/-/settings" class="text-sm text-gray-600 hover:text-gray-900">Settings</a>
+                    <form method="POST" action="/-/logout" class="inline">
+                        <button type="submit" class="text-sm text-gray-600 hover:text-gray-900">Logout</button>
+                    </form>
+                {{else}}
+                    <a href="/-/login" class="text-sm text-gray-600 hover:text-gray-900">Login</a>
+                {{end}}
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        {{template "content" .}}
+    </main>
+
+    <footer class="border-t border-gray-200 mt-16 py-6">
+        <div class="max-w-6xl mx-auto px-6 text-center text-sm text-gray-500">
+            Powered by <a href="https://github.com/wbrijesh/origin" class="hover:text-gray-700">Origin</a>
+        </div>
+    </footer>
+</body>
+</html>
+{{end}}
+
+{{define "chroma-css"}}
+/* Chroma syntax highlighting - injected at build time */
+.chroma { background-color: #f8f8f8; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; }
+.chroma .ln { margin-right: 0.75rem; color: #6e7781; }
+.chroma .lnt { margin-right: 0.75rem; color: #6e7781; }
+{{end}}
