@@ -13,10 +13,18 @@ import (
 
 	"github.com/wbrijesh/origin/internal/config"
 	"github.com/wbrijesh/origin/internal/db"
+	"github.com/wbrijesh/origin/internal/hooks"
+	httpsrv "github.com/wbrijesh/origin/internal/http"
 	sshsrv "github.com/wbrijesh/origin/internal/ssh"
 )
 
 func main() {
+	// Hidden "hook" subcommand — called by git hook scripts, not by users.
+	if len(os.Args) >= 3 && os.Args[1] == "hook" {
+		runHook(os.Args[2])
+		return
+	}
+
 	configPath := flag.String("config", "config.yaml", "path to configuration file")
 	flag.Parse()
 
@@ -73,7 +81,11 @@ func main() {
 		return sshServer.ListenAndServe()
 	})
 
-	// TODO: Phase 5 — start HTTP server
+	// Create and start HTTP server
+	httpServer := httpsrv.New(cfg, database)
+	g.Go(func() error {
+		return httpServer.ListenAndServe()
+	})
 
 	slog.Info(fmt.Sprintf("%s is ready", cfg.Name))
 
@@ -82,9 +94,34 @@ func main() {
 		<-ctx.Done()
 		slog.Info("shutting down...")
 		sshServer.Close()
+		httpServer.Close()
 	}()
 
 	if err := g.Wait(); err != nil {
 		slog.Error("server error", "error", err)
+	}
+}
+
+// runHook executes a git hook. Called by the hook scripts that
+// GenerateHooks writes into each bare repo.
+func runHook(hookName string) {
+	// Hooks log to stderr which git forwards to the pusher
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	switch hookName {
+	case "pre-receive":
+		if err := hooks.VerifyPreReceive(os.Stdin); err != nil {
+			fmt.Fprintf(os.Stderr, "origin: push rejected — %v\n", err)
+			os.Exit(1)
+		}
+	case "post-receive":
+		// TODO: Phase 8 — trigger webhooks
+		slog.Debug("post-receive hook (no-op)")
+	default:
+		fmt.Fprintf(os.Stderr, "origin: unknown hook: %s\n", hookName)
+		os.Exit(1)
 	}
 }
