@@ -1,0 +1,17 @@
+# Origin — configuration file
+# Copy to config.yaml and edit as needed.
+
+name: "Origin"
+
+# Path where Origin stores all data (repos, database, SSH keys, logs).
+data_path: "./data"
+
+ssh:
+  listen_addr: ":22222"
+  # host_key_path: ""  # Auto-generated into {data_path}/ssh/host_ed25519 if empty
+
+http:
+  listen_addr: ":3443"
+  public_url: "https://localhost:3443"
+  tls_cert_path: ""
+  tls_key_path: ""
