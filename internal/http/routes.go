@@ -10,6 +10,10 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	// Static files
 	mux.Handle("GET /-/static/", http.StripPrefix("/-/static/", http.FileServer(http.Dir("static"))))
 
+	// Setup (first run)
+	mux.HandleFunc("GET /-/setup", s.handleSetup)
+	mux.HandleFunc("POST /-/setup", s.handleSetupPost)
+
 	// Auth
 	mux.HandleFunc("GET /-/login", s.handleLogin)
 	mux.HandleFunc("POST /-/login", s.handleLoginPost)

@@ -19,45 +19,102 @@ import (
 	"github.com/wbrijesh/origin/internal/hooks"
 )
 
+// --- Initial Setup ---
+
+// needsSetup returns true if no admin password has been configured yet.
+func (s *Server) needsSetup() bool {
+	var count int
+	err := s.db.Get(&count, "SELECT COUNT(*) FROM settings WHERE key = 'password_hash'")
+	return err != nil || count == 0
+}
+
+func (s *Server) handleSetup(w http.ResponseWriter, r *http.Request) {
+	if !s.needsSetup() {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	data := s.baseData(r)
+	data["Title"] = "Setup"
+	s.render.render(w, "setup", data)
+}
+
+func (s *Server) handleSetupPost(w http.ResponseWriter, r *http.Request) {
+	if !s.needsSetup() {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	username := strings.TrimSpace(r.FormValue("username"))
+	password := r.FormValue("password")
+	confirm := r.FormValue("password_confirm")
+
+	if username == "" {
+		username = "admin"
+	}
+
+	data := s.baseData(r)
+	data["Title"] = "Setup"
+
+	if len(password) < 8 {
+		data["Error"] = "Password must be at least 8 characters."
+		s.render.render(w, "setup", data)
+		return
+	}
+
+	if password != confirm {
+		data["Error"] = "Passwords do not match."
+		s.render.render(w, "setup", data)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		s.renderError(w, r, http.StatusInternalServerError, "Failed to hash password")
+		return
+	}
+
+	s.db.Exec("INSERT INTO settings (key, value) VALUES ('password_hash', ?)", string(hash))           //nolint:errcheck
+	s.db.Exec("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_username', ?)", username) //nolint:errcheck
+
+	slog.Info("admin account created", "username", username)
+
+	// Auto-login after setup
+	s.createSession(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 // --- Authentication ---
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	// Redirect to setup if no password is configured
+	if s.needsSetup() {
+		http.Redirect(w, r, "/-/setup", http.StatusSeeOther)
+		return
+	}
 	data := s.baseData(r)
 	data["Title"] = "Login"
-	s.render.render(w, "layout", data)
+	s.render.render(w, "login", data)
 }
 
 func (s *Server) handleLoginPost(w http.ResponseWriter, r *http.Request) {
+	if s.needsSetup() {
+		http.Redirect(w, r, "/-/setup", http.StatusSeeOther)
+		return
+	}
+
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 
 	// Check credentials
 	var storedHash string
-	err := s.db.Get(&storedHash, "SELECT value FROM settings WHERE key = 'password_hash'")
-	if err != nil {
-		// No password set — check environment variable for initial setup
-		initPassword := os.Getenv("ORIGIN_ADMIN_PASSWORD")
-		if initPassword == "" {
-			data := s.baseData(r)
-			data["Title"] = "Login"
-			data["Error"] = "No admin password configured. Set ORIGIN_ADMIN_PASSWORD environment variable."
-			s.render.render(w, "layout", data)
-			return
-		}
-		// Hash and store it
-		hash, err := bcrypt.GenerateFromPassword([]byte(initPassword), bcrypt.DefaultCost)
-		if err != nil {
-			s.renderError(w, r, http.StatusInternalServerError, "Failed to hash password")
-			return
-		}
-		s.db.Exec("INSERT INTO settings (key, value) VALUES ('password_hash', ?)", string(hash)) //nolint:errcheck
-		s.db.Exec("INSERT OR IGNORE INTO settings (key, value) VALUES ('admin_username', 'admin')") //nolint:errcheck
-		storedHash = string(hash)
+	if err := s.db.Get(&storedHash, "SELECT value FROM settings WHERE key = 'password_hash'"); err != nil {
+		s.renderError(w, r, http.StatusInternalServerError, "Password not configured")
+		return
 	}
 
 	// Get stored username
 	var storedUsername string
-	err = s.db.Get(&storedUsername, "SELECT value FROM settings WHERE key = 'admin_username'")
+	err := s.db.Get(&storedUsername, "SELECT value FROM settings WHERE key = 'admin_username'")
 	if err != nil {
 		storedUsername = "admin"
 	}
@@ -66,24 +123,12 @@ func (s *Server) handleLoginPost(w http.ResponseWriter, r *http.Request) {
 		data := s.baseData(r)
 		data["Title"] = "Login"
 		data["Error"] = "Invalid username or password."
-		s.render.render(w, "layout", data)
+		s.render.render(w, "login", data)
 		return
 	}
 
 	// Create session
-	sessionID := generateToken()
-	expiresAt := time.Now().Add(7 * 24 * time.Hour)
-	s.db.Exec("INSERT INTO sessions (id, expires_at) VALUES (?, ?)", sessionID, expiresAt) //nolint:errcheck
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    sessionID,
-		Path:     "/",
-		Expires:  expiresAt,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	})
-
+	s.createSession(w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -215,7 +260,7 @@ func (s *Server) handleChangePassword(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleNewRepo(w http.ResponseWriter, r *http.Request) {
 	data := s.baseData(r)
 	data["Title"] = "New Repository"
-	s.render.render(w, "layout", data)
+	s.render.render(w, "new_repo", data)
 }
 
 func (s *Server) handleCreateRepo(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +272,7 @@ func (s *Server) handleCreateRepo(w http.ResponseWriter, r *http.Request) {
 		data := s.baseData(r)
 		data["Title"] = "New Repository"
 		data["Error"] = "Repository name is required."
-		s.render.render(w, "layout", data)
+		s.render.render(w, "new_repo", data)
 		return
 	}
 
@@ -237,7 +282,7 @@ func (s *Server) handleCreateRepo(w http.ResponseWriter, r *http.Request) {
 			data := s.baseData(r)
 			data["Title"] = "New Repository"
 			data["Error"] = "Invalid name. Use letters, numbers, hyphens, dots, and underscores only."
-			s.render.render(w, "layout", data)
+			s.render.render(w, "new_repo", data)
 			return
 		}
 	}
@@ -273,7 +318,7 @@ func (s *Server) handleCreateRepo(w http.ResponseWriter, r *http.Request) {
 		data := s.baseData(r)
 		data["Title"] = "New Repository"
 		data["Error"] = "Repository name already taken."
-		s.render.render(w, "layout", data)
+		s.render.render(w, "new_repo", data)
 		return
 	}
 
@@ -313,7 +358,7 @@ func (s *Server) handleRepoSettings(w http.ResponseWriter, r *http.Request) {
 	s.db.Select(&webhooks, "SELECT id, url, active FROM webhooks WHERE repo_id = (SELECT id FROM repositories WHERE name = ?)", repoName) //nolint:errcheck
 	data["Webhooks"] = webhooks
 
-	s.render.render(w, "layout", data)
+	s.render.render(w, "repo_settings", data)
 }
 
 func (s *Server) handleUpdateRepoSettings(w http.ResponseWriter, r *http.Request) {
@@ -437,7 +482,35 @@ func (s *Server) handleSettingsWithNewToken(w http.ResponseWriter, r *http.Reque
 		data["NewToken"] = newToken
 	}
 
-	s.render.render(w, "layout", data)
+	s.render.render(w, "settings", data)
+}
+
+// --- Session Helpers ---
+
+// createSession creates a new session and sets the cookie.
+func (s *Server) createSession(w http.ResponseWriter) {
+	sessionID := generateToken()
+	expiresAt := time.Now().Add(7 * 24 * time.Hour)
+	s.db.Exec("INSERT INTO sessions (id, expires_at) VALUES (?, ?)", sessionID, expiresAt) //nolint:errcheck
+
+	// Clean up expired sessions occasionally
+	s.db.Exec("DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP") //nolint:errcheck
+
+	cookie := &http.Cookie{
+		Name:     "session",
+		Value:    sessionID,
+		Path:     "/",
+		Expires:  expiresAt,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	// Set Secure flag when using TLS
+	if s.cfg.HasTLS() {
+		cookie.Secure = true
+	}
+
+	http.SetCookie(w, cookie)
 }
 
 // --- Helpers ---

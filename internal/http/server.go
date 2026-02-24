@@ -32,7 +32,7 @@ func New(cfg *config.Config, db *sqlx.DB) *Server {
 
 	s.server = &http.Server{
 		Addr:    cfg.HTTP.ListenAddr,
-		Handler: s.requestLogger(mux),
+		Handler: s.securityHeaders(s.requestLogger(mux)),
 	}
 
 	// Configure TLS if certs are provided
@@ -68,6 +68,19 @@ func (s *Server) requestLogger(next http.Handler) http.Handler {
 			"path", r.URL.Path,
 			"remote", r.RemoteAddr,
 		)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// securityHeaders adds standard security headers to every response.
+func (s *Server) securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		if s.cfg.HasTLS() {
+			w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		}
 		next.ServeHTTP(w, r)
 	})
 }

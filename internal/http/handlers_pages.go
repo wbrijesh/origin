@@ -46,6 +46,12 @@ type repoRow struct {
 }
 
 func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
+	// Redirect to setup wizard on first run
+	if s.needsSetup() {
+		http.Redirect(w, r, "/-/setup", http.StatusSeeOther)
+		return
+	}
+
 	data := s.baseData(r)
 	data["Title"] = ""
 
@@ -63,7 +69,7 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data["Repos"] = repos
-	s.render.render(w, "layout", data)
+	s.render.render(w, "home", data)
 }
 
 func (s *Server) handleRepo(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +99,7 @@ func (s *Server) handleRepo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		data["IsEmpty"] = true
 		data["DefaultBranch"] = "main"
-		s.render.render(w, "layout", data)
+		s.render.render(w, "repo", data)
 		return
 	}
 
@@ -105,7 +111,7 @@ func (s *Server) handleRepo(w http.ResponseWriter, r *http.Request) {
 	entries, err := gitpkg.Tree(gitRepo, defaultBranch, "")
 	if err != nil {
 		data["IsEmpty"] = true
-		s.render.render(w, "layout", data)
+		s.render.render(w, "repo", data)
 		return
 	}
 	data["Entries"] = entries
@@ -121,7 +127,7 @@ func (s *Server) handleRepo(w http.ResponseWriter, r *http.Request) {
 		data["ReadmeFile"] = readmeFile
 	}
 
-	s.render.render(w, "layout", data)
+	s.render.render(w, "repo", data)
 }
 
 // Breadcrumb represents a path segment for navigation.
@@ -193,7 +199,7 @@ func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
 	data["Entries"] = entries
 
 	s.loadRepoMeta(data, repoName)
-	s.render.render(w, "layout", data)
+	s.render.render(w, "tree", data)
 }
 
 func (s *Server) handleBlob(w http.ResponseWriter, r *http.Request) {
@@ -229,7 +235,7 @@ func (s *Server) handleBlob(w http.ResponseWriter, r *http.Request) {
 	data["HighlightedContent"] = highlightCode(content, filepath.Base(path))
 
 	s.loadRepoMeta(data, repoName)
-	s.render.render(w, "layout", data)
+	s.render.render(w, "file", data)
 }
 
 func (s *Server) handleLog(w http.ResponseWriter, r *http.Request) {
@@ -272,7 +278,7 @@ func (s *Server) handleLog(w http.ResponseWriter, r *http.Request) {
 	data["HasNext"] = hasMore
 
 	s.loadRepoMeta(data, repoName)
-	s.render.render(w, "layout", data)
+	s.render.render(w, "log", data)
 }
 
 // DiffLine represents a single line in a diff, with type info for coloring.
@@ -339,7 +345,7 @@ func (s *Server) handleCommit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.loadRepoMeta(data, repoName)
-	s.render.render(w, "layout", data)
+	s.render.render(w, "commit", data)
 }
 
 func (s *Server) handleRefs(w http.ResponseWriter, r *http.Request) {
@@ -381,7 +387,7 @@ func (s *Server) handleRefs(w http.ResponseWriter, r *http.Request) {
 	data["Tags"] = tags
 
 	s.loadRepoMeta(data, repoName)
-	s.render.render(w, "layout", data)
+	s.render.render(w, "refs", data)
 }
 
 func (s *Server) handleArchive(w http.ResponseWriter, r *http.Request) {
@@ -400,8 +406,8 @@ func (s *Server) handleArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get tree at ref root
-	entries, err := gitpkg.Tree(gitRepo, ref, "")
+	// Get all files recursively
+	files, err := gitpkg.Archive(gitRepo, ref)
 	if err != nil {
 		s.renderError(w, r, http.StatusNotFound, "Ref not found")
 		return
@@ -415,23 +421,15 @@ func (s *Server) handleArchive(w http.ResponseWriter, r *http.Request) {
 	tw := tar.NewWriter(gz)
 	defer tw.Close()
 
-	// Write files (flat — only root level for now)
 	prefix := repoName + "-" + ref + "/"
-	for _, entry := range entries {
-		if entry.IsDir {
-			continue
-		}
-		content, _, err := gitpkg.Blob(gitRepo, ref, entry.Name)
-		if err != nil {
-			continue
-		}
+	for _, f := range files {
 		tw.WriteHeader(&tar.Header{ //nolint:errcheck
-			Name:    prefix + entry.Name,
-			Size:    int64(len(content)),
+			Name:    prefix + f.Path,
+			Size:    int64(len(f.Content)),
 			Mode:    0o644,
 			ModTime: time.Now(),
 		})
-		io.WriteString(tw, content) //nolint:errcheck
+		io.WriteString(tw, f.Content) //nolint:errcheck
 	}
 }
 
@@ -464,5 +462,5 @@ func (s *Server) renderError(w http.ResponseWriter, r *http.Request, code int, m
 	data["Title"] = fmt.Sprintf("%d", code)
 	data["Code"] = code
 	data["Message"] = message
-	s.render.render(w, "layout", data)
+	s.render.render(w, "error", data)
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"path/filepath"
@@ -23,9 +24,10 @@ import (
 //go:embed templates/*
 var templateFS embed.FS
 
-// renderer holds parsed templates and rendering utilities.
+// renderer holds per-page parsed templates and rendering utilities.
 type renderer struct {
-	templates *template.Template
+	pages     map[string]*template.Template
+	funcMap   template.FuncMap
 	markdown  goldmark.Markdown
 	sanitizer *bluemonday.Policy
 }
@@ -36,9 +38,9 @@ func newRenderer() *renderer {
 		"shortHash": shortHash,
 		"highlight":  highlightCode,
 		"renderMarkdown": func(s string) template.HTML {
-			return "" // placeholder, replaced after construction
+			return "" // placeholder, replaced below
 		},
-		"join":     strings.Join,
+		"join":      strings.Join,
 		"trimSpace": strings.TrimSpace,
 		"firstLine": firstLine,
 		"pathJoin":  filepath.Join,
@@ -46,33 +48,71 @@ func newRenderer() *renderer {
 		"sub": func(a, b int) int { return a - b },
 	}
 
-	tmpl := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "templates/*.html"))
-
 	md := goldmark.New()
 	sanitizer := bluemonday.UGCPolicy()
 	sanitizer.AllowAttrs("class").Matching(bluemonday.SpaceSeparatedTokens).OnElements("code", "pre", "span", "div")
 
 	r := &renderer{
-		templates: tmpl,
+		funcMap:   funcMap,
 		markdown:  md,
 		sanitizer: sanitizer,
 	}
 
-	// Replace the renderMarkdown function with one that uses the renderer
-	tmpl.Funcs(template.FuncMap{
-		"renderMarkdown": r.renderMarkdown,
-	})
+	// Replace the placeholder with the real renderMarkdown before parsing
+	funcMap["renderMarkdown"] = r.renderMarkdown
+
+	// Build per-page template sets.
+	// Shared templates: layout.html (defines "layout" + "chroma-css"),
+	//                   _partials.html (defines "repo-header")
+	shared := []string{"templates/layout.html", "templates/_partials.html"}
+
+	r.pages = make(map[string]*template.Template)
+
+	entries, err := fs.ReadDir(templateFS, "templates")
+	if err != nil {
+		panic("failed to read template directory: " + err.Error())
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+		// Skip non-HTML, the layout itself, and partials (prefixed with _)
+		if !strings.HasSuffix(name, ".html") || name == "layout.html" || strings.HasPrefix(name, "_") {
+			continue
+		}
+
+		pageName := strings.TrimSuffix(name, ".html")
+
+		// Each page gets its own template set: shared templates + page template.
+		// This ensures each page's {{define "content"}} block is independent.
+		files := make([]string, 0, len(shared)+1)
+		files = append(files, shared...)
+		files = append(files, "templates/"+name)
+
+		tmpl := template.Must(
+			template.New("").Funcs(funcMap).ParseFS(templateFS, files...),
+		)
+		r.pages[pageName] = tmpl
+	}
 
 	return r
 }
 
-// render executes a named template with the given data.
-func (r *renderer) render(w http.ResponseWriter, name string, data any) {
+// render executes a page template wrapped in the layout.
+// The page parameter should match the template filename without extension
+// (e.g., "home", "repo", "login", "error").
+func (r *renderer) render(w http.ResponseWriter, page string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
+	tmpl, ok := r.pages[page]
+	if !ok {
+		slog.Error("unknown page template", "page", page)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	var buf bytes.Buffer
-	if err := r.templates.ExecuteTemplate(&buf, name, data); err != nil {
-		slog.Error("template render failed", "template", name, "error", err)
+	if err := tmpl.ExecuteTemplate(&buf, "layout", data); err != nil {
+		slog.Error("template render failed", "page", page, "error", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}

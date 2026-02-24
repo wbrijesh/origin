@@ -366,6 +366,50 @@ func Readme(repo *git.Repository, ref string) (string, string, error) {
 	return "", "", nil // No readme found
 }
 
+// ArchiveFile represents a file to include in a tar archive.
+type ArchiveFile struct {
+	Path    string
+	Content string
+	Size    int64
+}
+
+// Archive returns all files at the given ref for creating a tar archive.
+func Archive(repo *git.Repository, ref string) ([]ArchiveFile, error) {
+	hash, err := resolveRef(repo, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	commit, err := repo.CommitObject(*hash)
+	if err != nil {
+		return nil, fmt.Errorf("get commit: %w", err)
+	}
+
+	tree, err := commit.Tree()
+	if err != nil {
+		return nil, fmt.Errorf("get tree: %w", err)
+	}
+
+	var files []ArchiveFile
+	err = tree.Files().ForEach(func(f *object.File) error {
+		content, err := f.Contents()
+		if err != nil {
+			return nil // skip unreadable files
+		}
+		files = append(files, ArchiveFile{
+			Path:    f.Name,
+			Content: content,
+			Size:    f.Size,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk files: %w", err)
+	}
+
+	return files, nil
+}
+
 // DefaultBranch returns the default branch of a repository by inspecting HEAD.
 func DefaultBranch(repo *git.Repository) string {
 	head, err := repo.Head()
