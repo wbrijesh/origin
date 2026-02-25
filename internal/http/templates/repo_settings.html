@@ -2,84 +2,85 @@
 <div>
     {{template "repo-header" .}}
 
-    <h2 class="text-lg font-semibold mb-6">Repository Settings</h2>
+    <h2 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-6">Repository Settings</h2>
 
     <!-- General settings -->
-    <form method="POST" action="/{{.RepoName}}/-/settings" class="bg-white border border-gray-200 rounded-lg p-6 mb-6 space-y-4 max-w-xl">
-        <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <input type="text" id="description" name="description" value="{{.Description}}"
-                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div>
-            <label for="default_branch" class="block text-sm font-medium text-gray-700 mb-1">Default Branch</label>
-            <input type="text" id="default_branch" name="default_branch" value="{{.DefaultBranch}}"
-                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div class="flex items-center gap-2">
-            <input type="checkbox" id="is_private" name="is_private" {{if .IsPrivate}}checked{{end}}
-                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-            <label for="is_private" class="text-sm text-gray-700">Private repository</label>
-        </div>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Save Changes</button>
-    </form>
+    <section class="mb-10">
+        <form method="POST" action="/{{.RepoName}}/-/settings" class="border border-[var(--color-border)] p-5 space-y-4 max-w-lg">
+            <div>
+                <label for="description" class="block text-xs text-[var(--color-text-dim)] mb-1">Description</label>
+                <input type="text" id="description" name="description" value="{{.Description}}"
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
+            </div>
+            <div>
+                <label for="default_branch" class="block text-xs text-[var(--color-text-dim)] mb-1">Default Branch</label>
+                <input type="text" id="default_branch" name="default_branch" value="{{.DefaultBranch}}"
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="is_private" name="is_private" {{if .IsPrivate}}checked{{end}} class="accent-[var(--color-accent)]" />
+                <label for="is_private" class="text-xs text-[var(--color-text-dim)]">Private repository</label>
+            </div>
+            <button type="submit" class="border border-[var(--color-border)] text-[var(--color-text)] px-4 py-2 text-xs uppercase tracking-wider hover:bg-[var(--color-surface)] hover:text-white cursor-pointer">Save Changes</button>
+        </form>
+    </section>
 
     <!-- Webhooks -->
-    <section class="mb-8">
-        <h3 class="text-lg font-semibold mb-4">Webhooks</h3>
-        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4">
+    <section class="mb-10">
+        <h2 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Webhooks</h2>
+        <div class="border border-[var(--color-border)] mb-4">
             {{if .Webhooks}}
             {{range .Webhooks}}
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-0">
+            <div class="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border-light)] last:border-0">
                 <div>
-                    <code class="text-sm text-gray-700">{{.URL}}</code>
-                    {{if not .Active}}<span class="ml-2 text-xs text-gray-500">(inactive)</span>{{end}}
+                    <code class="text-sm text-[var(--color-text)]">{{.URL}}</code>
+                    {{if not .Active}}<span class="ml-2 text-xs text-[var(--color-text-muted)]">(inactive)</span>{{end}}
                 </div>
                 <form method="POST" action="/{{$.RepoName}}/-/webhooks/{{.ID}}/delete" hx-post="/{{$.RepoName}}/-/webhooks/{{.ID}}/delete" hx-confirm="Delete this webhook?">
-                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 cursor-pointer">delete</button>
                 </form>
             </div>
             {{end}}
             {{else}}
-            <div class="px-4 py-6 text-center text-gray-500 text-sm">No webhooks configured.</div>
+            <div class="px-4 py-6 text-center text-[var(--color-text-muted)] text-xs">No webhooks configured.</div>
             {{end}}
         </div>
 
-        <form method="POST" action="/{{.RepoName}}/-/webhooks" class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3 max-w-xl">
+        <form method="POST" action="/{{.RepoName}}/-/webhooks" class="border border-[var(--color-border)] p-4 space-y-3 max-w-lg">
             <div>
-                <label for="webhook_url" class="block text-sm font-medium text-gray-700 mb-1">Payload URL</label>
+                <label for="webhook_url" class="block text-xs text-[var(--color-text-dim)] mb-1">Payload URL</label>
                 <input type="url" id="webhook_url" name="url" required placeholder="https://example.com/webhook"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
             <div>
-                <label for="webhook_secret" class="block text-sm font-medium text-gray-700 mb-1">Secret (optional)</label>
+                <label for="webhook_secret" class="block text-xs text-[var(--color-text-dim)] mb-1">Secret (optional)</label>
                 <input type="text" id="webhook_secret" name="secret" placeholder="optional shared secret for HMAC"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Add Webhook</button>
+            <button type="submit" class="border border-[var(--color-border)] text-[var(--color-text)] px-4 py-2 text-xs uppercase tracking-wider hover:bg-[var(--color-surface)] hover:text-white cursor-pointer">Add Webhook</button>
         </form>
     </section>
 
     <!-- Rename -->
-    <section class="mb-8">
-        <h3 class="text-lg font-semibold mb-4">Rename Repository</h3>
-        <form method="POST" action="/{{.RepoName}}/-/rename" class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-end gap-3 max-w-xl">
+    <section class="mb-10">
+        <h2 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Rename Repository</h2>
+        <form method="POST" action="/{{.RepoName}}/-/rename" class="border border-[var(--color-border)] p-4 flex items-end gap-3 max-w-lg">
             <div class="flex-1">
-                <label for="new_name" class="block text-sm font-medium text-gray-700 mb-1">New Name</label>
+                <label for="new_name" class="block text-xs text-[var(--color-text-dim)] mb-1">New Name</label>
                 <input type="text" id="new_name" name="new_name" required value="{{.RepoName}}"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
-            <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded-md text-sm hover:bg-yellow-700">Rename</button>
+            <button type="submit" class="border border-[var(--color-border)] text-[var(--color-text)] px-4 py-2 text-xs uppercase tracking-wider hover:bg-[var(--color-surface)] hover:text-white cursor-pointer whitespace-nowrap">Rename</button>
         </form>
     </section>
 
     <!-- Danger Zone -->
-    <section>
-        <h3 class="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
-        <div class="border-2 border-red-200 rounded-lg p-6">
-            <p class="text-sm text-gray-700 mb-4">Deleting a repository is permanent and cannot be undone.</p>
+    <section class="mb-10">
+        <h2 class="text-xs uppercase tracking-wider text-red-400 mb-3">Danger Zone</h2>
+        <div class="border border-red-900 p-5">
+            <p class="text-xs text-[var(--color-text-dim)] mb-4">Deleting a repository is permanent and cannot be undone.</p>
             <form method="POST" action="/{{.RepoName}}/-/delete" hx-post="/{{.RepoName}}/-/delete" hx-confirm="Are you sure you want to delete {{.RepoName}}? This cannot be undone.">
-                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700">Delete Repository</button>
+                <button type="submit" class="border border-red-800 text-red-400 px-4 py-2 text-xs uppercase tracking-wider hover:bg-red-900/30 hover:text-red-300 cursor-pointer">Delete Repository</button>
             </form>
         </div>
     </section>

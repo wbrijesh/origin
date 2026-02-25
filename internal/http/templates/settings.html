@@ -1,99 +1,99 @@
 {{define "content"}}
 <div>
-    <h1 class="text-2xl font-bold mb-8">Settings</h1>
+    <h1 class="text-sm uppercase tracking-wider mb-8 text-[var(--color-text)]">Settings</h1>
 
     <!-- SSH Keys -->
     <section class="mb-10">
-        <h2 class="text-lg font-semibold mb-4">SSH Keys</h2>
-        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4">
+        <h2 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-3">SSH Keys</h2>
+        <div class="border border-[var(--color-border)] mb-4">
             {{if .SSHKeys}}
             {{range .SSHKeys}}
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-0">
+            <div class="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border-light)] last:border-0">
                 <div>
-                    <span class="font-medium text-sm">{{.Name}}</span>
-                    <code class="ml-2 text-xs text-gray-500">{{.Fingerprint}}</code>
+                    <span class="text-sm text-[var(--color-text)]">{{.Name}}</span>
+                    <code class="ml-3 text-xs text-[var(--color-text-muted)]">{{.Fingerprint}}</code>
                 </div>
                 <form method="POST" action="/-/settings/ssh-keys/{{.ID}}/delete" hx-post="/-/settings/ssh-keys/{{.ID}}/delete" hx-confirm="Delete this SSH key?">
-                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 cursor-pointer">delete</button>
                 </form>
             </div>
             {{end}}
             {{else}}
-            <div class="px-4 py-6 text-center text-gray-500 text-sm">No SSH keys configured.</div>
+            <div class="px-4 py-6 text-center text-[var(--color-text-muted)] text-xs">No SSH keys configured.</div>
             {{end}}
         </div>
 
-        <form method="POST" action="/-/settings/ssh-keys" class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+        <form method="POST" action="/-/settings/ssh-keys" class="border border-[var(--color-border)] p-4 space-y-3">
             <div>
-                <label for="key_name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label for="key_name" class="block text-xs text-[var(--color-text-dim)] mb-1">Name</label>
                 <input type="text" id="key_name" name="name" required placeholder="My Laptop"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
             <div>
-                <label for="public_key" class="block text-sm font-medium text-gray-700 mb-1">Public Key</label>
+                <label for="public_key" class="block text-xs text-[var(--color-text-dim)] mb-1">Public Key</label>
                 <textarea id="public_key" name="public_key" required rows="3" placeholder="ssh-ed25519 AAAA..."
-                          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                          class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]"></textarea>
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Add SSH Key</button>
+            <button type="submit" class="border border-[var(--color-border)] text-[var(--color-text)] px-4 py-2 text-xs uppercase tracking-wider hover:bg-[var(--color-surface)] hover:text-white cursor-pointer">Add SSH Key</button>
         </form>
     </section>
 
     <!-- Access Tokens -->
     <section class="mb-10">
-        <h2 class="text-lg font-semibold mb-4">Access Tokens</h2>
-        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-4">
+        <h2 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Access Tokens</h2>
+        <div class="border border-[var(--color-border)] mb-4">
             {{if .Tokens}}
             {{range .Tokens}}
-            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-0">
+            <div class="flex items-center justify-between px-4 py-2.5 border-b border-[var(--color-border-light)] last:border-0">
                 <div>
-                    <span class="font-medium text-sm">{{.Name}}</span>
-                    <span class="ml-2 text-xs text-gray-500">Created {{.CreatedAt | timeAgo}}</span>
+                    <span class="text-sm text-[var(--color-text)]">{{.Name}}</span>
+                    <span class="ml-3 text-xs text-[var(--color-text-muted)]">{{.CreatedAt | timeAgo}}</span>
                     {{if .ExpiresAt}}
-                    <span class="ml-2 text-xs text-gray-500">Expires {{.ExpiresAt}}</span>
+                    <span class="ml-2 text-xs text-[var(--color-text-muted)]">expires {{.ExpiresAt}}</span>
                     {{end}}
                 </div>
                 <form method="POST" action="/-/settings/tokens/{{.ID}}/delete" hx-post="/-/settings/tokens/{{.ID}}/delete" hx-confirm="Revoke this token?">
-                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Revoke</button>
+                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 cursor-pointer">revoke</button>
                 </form>
             </div>
             {{end}}
             {{else}}
-            <div class="px-4 py-6 text-center text-gray-500 text-sm">No access tokens.</div>
+            <div class="px-4 py-6 text-center text-[var(--color-text-muted)] text-xs">No access tokens.</div>
             {{end}}
         </div>
 
-        <form method="POST" action="/-/settings/tokens" class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-end gap-3">
+        <form method="POST" action="/-/settings/tokens" class="border border-[var(--color-border)] p-4 flex items-end gap-3">
             <div class="flex-1">
-                <label for="token_name" class="block text-sm font-medium text-gray-700 mb-1">Token Name</label>
+                <label for="token_name" class="block text-xs text-[var(--color-text-dim)] mb-1">Token Name</label>
                 <input type="text" id="token_name" name="name" required placeholder="CI/CD"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Create Token</button>
+            <button type="submit" class="border border-[var(--color-border)] text-[var(--color-text)] px-4 py-2 text-xs uppercase tracking-wider hover:bg-[var(--color-surface)] hover:text-white cursor-pointer whitespace-nowrap">Create Token</button>
         </form>
 
         {{if .NewToken}}
-        <div class="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-            <p class="text-sm text-green-800 font-medium mb-1">Token created! Copy it now — it won't be shown again.</p>
-            <code class="block bg-white border border-green-300 rounded px-3 py-2 text-sm font-mono select-all">{{.NewToken}}</code>
+        <div class="mt-4 border border-green-800 p-4">
+            <p class="text-xs text-green-400 mb-2">Token created. Copy it now — it won't be shown again.</p>
+            <code class="block bg-[#111] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] select-all">{{.NewToken}}</code>
         </div>
         {{end}}
     </section>
 
     <!-- Change Password -->
     <section class="mb-10">
-        <h2 class="text-lg font-semibold mb-4">Change Password</h2>
-        <form method="POST" action="/-/settings/password" class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3 max-w-md">
+        <h2 class="text-xs uppercase tracking-wider text-[var(--color-text-muted)] mb-3">Change Password</h2>
+        <form method="POST" action="/-/settings/password" class="border border-[var(--color-border)] p-4 space-y-3 max-w-md">
             <div>
-                <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <label for="current_password" class="block text-xs text-[var(--color-text-dim)] mb-1">Current Password</label>
                 <input type="password" id="current_password" name="current_password" required
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
             <div>
-                <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <label for="new_password" class="block text-xs text-[var(--color-text-dim)] mb-1">New Password</label>
                 <input type="password" id="new_password" name="new_password" required
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-[var(--color-bg)] border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] focus:outline-none focus:border-[var(--color-accent)]" />
             </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">Update Password</button>
+            <button type="submit" class="border border-[var(--color-border)] text-[var(--color-text)] px-4 py-2 text-xs uppercase tracking-wider hover:bg-[var(--color-surface)] hover:text-white cursor-pointer">Update Password</button>
         </form>
     </section>
 </div>

@@ -5,53 +5,98 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{if .Title}}{{.Title}} — {{end}}{{.ServerName}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --font-mono: 'JetBrains Mono', monospace;
+            --color-bg: #1a1a1a;
+            --color-surface: #222222;
+            --color-border: #333333;
+            --color-border-light: #2a2a2a;
+            --color-text: #e0e0e0;
+            --color-text-dim: #888888;
+            --color-text-muted: #555555;
+            --color-accent: #e0e0e0;
+            --color-link: #e0e0e0;
+            --color-danger: #c44;
+        }
+        * { font-family: 'JetBrains Mono', monospace; }
+        body { background: var(--color-bg); color: var(--color-text); }
+        .diff-add { background-color: rgba(63, 185, 80, 0.15); color: #7ee787; }
+        .diff-del { background-color: rgba(248, 81, 73, 0.15); color: #ffa198; }
+        .diff-hunk { background-color: rgba(56, 139, 253, 0.1); color: #79c0ff; }
+        .prose { max-width: none; color: var(--color-text); }
+        .prose h1, .prose h2, .prose h3 { color: #fff; }
+        .prose a { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+        .prose code { font-size: 0.8rem; background: #2a2a2a; padding: 0.1em 0.3em; }
+        .prose pre { background: #1e1e1e; overflow-x: auto; }
+        .prose blockquote { border-color: #333; color: #999; }
+    </style>
     <style>
         {{template "chroma-css"}}
     </style>
-    <style type="text/tailwindcss">
-        .prose { max-width: none; }
-        .prose pre { overflow-x: auto; }
-        .prose code { font-size: 0.875rem; }
-        .diff-add { background-color: #e6ffec; }
-        .diff-del { background-color: #ffebe9; }
-        .diff-hunk { background-color: #f0f4ff; color: #57606a; }
-    </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
-    <nav class="bg-white border-b border-gray-200 px-6 py-3">
-        <div class="max-w-6xl mx-auto flex items-center justify-between">
-            <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600">{{.ServerName}}</a>
-            <div class="flex items-center gap-4">
+<body class="min-h-screen">
+    <nav class="border-b border-[var(--color-border)]">
+        <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+            <a href="/" class="text-sm uppercase tracking-widest text-[var(--color-text)] hover:text-white">{{.ServerName}}</a>
+            <div class="flex items-center gap-6">
+                <a href="/" class="text-xs uppercase tracking-wider text-[var(--color-text-dim)] hover:text-white">Repositories</a>
                 {{if .LoggedIn}}
-                    <a href="/-/settings" class="text-sm text-gray-600 hover:text-gray-900">Settings</a>
+                    <a href="/-/settings" class="text-xs uppercase tracking-wider text-[var(--color-text-dim)] hover:text-white">Settings</a>
                     <form method="POST" action="/-/logout" class="inline">
-                        <button type="submit" class="text-sm text-gray-600 hover:text-gray-900">Logout</button>
+                        <button type="submit" class="text-xs uppercase tracking-wider text-[var(--color-text-dim)] hover:text-white cursor-pointer">Logout</button>
                     </form>
                 {{else}}
-                    <a href="/-/login" class="text-sm text-gray-600 hover:text-gray-900">Login</a>
+                    <a href="/-/login" class="text-xs uppercase tracking-wider text-[var(--color-text-dim)] hover:text-white">Login</a>
                 {{end}}
             </div>
         </div>
     </nav>
 
-    <main class="max-w-6xl mx-auto px-6 py-8">
+    <main class="max-w-5xl mx-auto px-6 py-8">
         {{template "content" .}}
     </main>
-
-    <footer class="border-t border-gray-200 mt-16 py-6">
-        <div class="max-w-6xl mx-auto px-6 text-center text-sm text-gray-500">
-            Powered by <a href="https://github.com/wbrijesh/origin" class="hover:text-gray-700">Origin</a>
-        </div>
-    </footer>
 </body>
 </html>
 {{end}}
 
 {{define "chroma-css"}}
-/* Chroma syntax highlighting - injected at build time */
-.chroma { background-color: #f8f8f8; padding: 1rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; }
-.chroma .ln { margin-right: 0.75rem; color: #6e7781; }
-.chroma .lnt { margin-right: 0.75rem; color: #6e7781; }
+.chroma { background-color: #1e1e1e; padding: 1rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.6; }
+.chroma .ln { margin-right: 0.75rem; color: #555; user-select: none; }
+.chroma .lnt { margin-right: 0.75rem; color: #555; user-select: none; }
+.chroma .cl { color: #d4d4d4; }
+.chroma .k { color: #569cd6; }
+.chroma .kd { color: #569cd6; }
+.chroma .kn { color: #c586c0; }
+.chroma .kr { color: #569cd6; }
+.chroma .kt { color: #4ec9b0; }
+.chroma .s { color: #ce9178; }
+.chroma .s1 { color: #ce9178; }
+.chroma .s2 { color: #ce9178; }
+.chroma .sa { color: #ce9178; }
+.chroma .sc { color: #ce9178; }
+.chroma .se { color: #d7ba7d; }
+.chroma .mi { color: #b5cea8; }
+.chroma .mf { color: #b5cea8; }
+.chroma .mh { color: #b5cea8; }
+.chroma .c { color: #6a9955; }
+.chroma .c1 { color: #6a9955; }
+.chroma .cm { color: #6a9955; }
+.chroma .cp { color: #c586c0; }
+.chroma .na { color: #9cdcfe; }
+.chroma .nf { color: #dcdcaa; }
+.chroma .nb { color: #dcdcaa; }
+.chroma .nc { color: #4ec9b0; }
+.chroma .nn { color: #4ec9b0; }
+.chroma .nt { color: #569cd6; }
+.chroma .o { color: #d4d4d4; }
+.chroma .p { color: #d4d4d4; }
+.chroma .gh { color: #569cd6; font-weight: bold; }
+.chroma .gi { color: #7ee787; }
+.chroma .gd { color: #ffa198; }
 {{end}}

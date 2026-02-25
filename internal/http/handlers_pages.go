@@ -92,6 +92,7 @@ func (s *Server) handleRepo(w http.ResponseWriter, r *http.Request) {
 	data["RepoName"] = repoName
 	data["Description"] = repo.Description
 	data["IsPrivate"] = repo.IsPrivate
+	data["ActiveTab"] = "files"
 	data["CloneSSH"] = fmt.Sprintf("%s/%s", s.cfg.SSHCloneBase(), repoName)
 	data["CloneHTTP"] = fmt.Sprintf("%s/%s", s.cfg.HTTP.PublicURL, repoName)
 
@@ -167,6 +168,7 @@ func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
 	data["Title"] = fmt.Sprintf("%s — %s", repoName, path)
 	data["RepoName"] = repoName
 	data["Ref"] = ref
+	data["ActiveTab"] = "files"
 	data["Breadcrumbs"] = buildBreadcrumbs(path)
 
 	// Set current path for building child links
@@ -259,6 +261,7 @@ func (s *Server) handleLog(w http.ResponseWriter, r *http.Request) {
 	data["Title"] = fmt.Sprintf("%s — commits", repoName)
 	data["RepoName"] = repoName
 	data["Ref"] = ref
+	data["ActiveTab"] = "commits"
 	data["Page"] = page
 	data["HasPrev"] = page > 0
 
@@ -359,6 +362,7 @@ func (s *Server) handleRefs(w http.ResponseWriter, r *http.Request) {
 	data := s.baseData(r)
 	data["Title"] = fmt.Sprintf("%s — refs", repoName)
 	data["RepoName"] = repoName
+	data["ActiveTab"] = "refs"
 
 	gitRepo, err := gitpkg.OpenRepo(s.cfg.ReposPath(), repoName)
 	if err != nil {
@@ -452,6 +456,15 @@ func (s *Server) loadRepoMeta(data map[string]any, repoName string) {
 	if err := s.db.Get(&repo, "SELECT name, description, is_private, updated_at FROM repositories WHERE name = ?", repoName); err == nil {
 		data["Description"] = repo.Description
 		data["IsPrivate"] = repo.IsPrivate
+	}
+	// Ensure DefaultBranch is set for repo-tabs partial.
+	if _, ok := data["DefaultBranch"]; !ok {
+		gitRepo, err := gitpkg.OpenRepo(s.cfg.ReposPath(), repoName)
+		if err == nil {
+			data["DefaultBranch"] = gitpkg.DefaultBranch(gitRepo)
+		} else {
+			data["DefaultBranch"] = "main"
+		}
 	}
 }
 

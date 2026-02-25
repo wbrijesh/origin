@@ -3,24 +3,24 @@
     {{template "repo-header" .}}
 
     <!-- Breadcrumb -->
-    <div class="text-sm text-gray-600 mb-4">
-        <a href="/{{.RepoName}}/" class="text-blue-600 hover:underline">{{.RepoName}}</a>
-        <span class="mx-1">/</span>
-        <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-xs">{{.Ref}}</span>
+    <div class="text-xs text-[var(--color-text-dim)] mb-4">
+        <a href="/{{.RepoName}}/" class="text-[var(--color-text)] hover:text-white">{{.RepoName}}</a>
+        <span class="mx-1 text-[var(--color-text-muted)]">/</span>
+        <span class="text-[var(--color-text-muted)]">{{.Ref}}</span>
         {{range .Breadcrumbs}}
-        <span class="mx-1">/</span>
+        <span class="mx-1 text-[var(--color-text-muted)]">/</span>
         {{if .IsLast}}
-        <span class="font-medium">{{.Name}}</span>
+        <span class="text-[var(--color-text)]">{{.Name}}</span>
         {{else}}
-        <a href="/{{$.RepoName}}/tree/{{$.Ref}}/{{.Path}}" class="text-blue-600 hover:underline">{{.Name}}</a>
+        <a href="/{{$.RepoName}}/tree/{{$.Ref}}/{{.Path}}" class="text-[var(--color-text)] hover:text-white">{{.Name}}</a>
         {{end}}
         {{end}}
     </div>
 
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
-            <span class="text-sm text-gray-700 font-medium">{{.FileName}}</span>
-            <span class="text-xs text-gray-500">{{.FileSize}}</span>
+    <div class="border border-[var(--color-border)]">
+        <div class="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] text-xs">
+            <span class="text-[var(--color-text)]">{{.FileName}}</span>
+            <span class="text-[var(--color-text-muted)]">{{.FileSize}}</span>
         </div>
         <div class="overflow-x-auto">
             {{.HighlightedContent}}
